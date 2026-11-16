@@ -1,0 +1,41 @@
+name: Robô Espião - Diário Oficial de Sarzedo
+
+on:
+  schedule:
+    # Executa automaticamente a cada 30 minutos
+    - cron: '*/30 * * * *'
+  # Adiciona um botão para você testar manualmente quando quiser
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vigiar-diario:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar arquivos do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar bibliotecas
+        run: pip install requests beautifulsoup4
+
+      - name: Rodar Robô Espião
+        env:
+          EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
+          EMAIL_SENHA: ${{ secrets.EMAIL_SENHA }}
+          EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }}
+        run: python monitor.py
+
+      - name: Salvar número da nova edição no GitHub
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "Robô Espião"
+          git add ultima_edicao.txt
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Atualiza edição do Diário Oficial" && git push)
